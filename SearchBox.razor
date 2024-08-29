@@ -1,0 +1,29 @@
+﻿<div class="d-flex justify-content-between align-items-center">
+    <input style="width: 200%; max-width: 500px; margin: 10px;" class="form-control" placeholder="@Placeholder1" @bind="SearchTerm1" /><br />
+    <input style="width: 200%; max-width: 500px;  margin: 10px;" class="form-control" placeholder="@Placeholder2" @bind="SearchTerm2" /><br />
+    <input style="width: 200%; max-width: 500px;  margin: 10px;" class="form-control" placeholder="@Placeholder3" @bind="SearchTerm3" /><br />
+    <button style="width: 200%; max-width: 500px;  margin: 10px;" class="form-control btn btn-primary" @onclick="OnSearchClicked">Search</button>
+</div>
+
+@code {
+    [Parameter]
+    public EventCallback<(string, string, string)> OnSearch { get; set; }
+
+    [Parameter]
+    public string Placeholder1 { get; set; }
+
+    [Parameter]
+    public string Placeholder2 { get; set; }
+
+    [Parameter]
+    public string Placeholder3 { get; set; }
+
+    private string SearchTerm1 { get; set; }
+    private string SearchTerm2 { get; set; }
+    private string SearchTerm3 { get; set; }
+
+    private async Task OnSearchClicked()
+    {
+        await OnSearch.InvokeAsync((SearchTerm1, SearchTerm2, SearchTerm3));
+    }
+}

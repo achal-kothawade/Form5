@@ -1,0 +1,267 @@
+﻿@page "/Create"
+@using Form5.Data
+@using Form5.Models
+@inject SafetyService safetyService
+@using Syncfusion.Blazor.Grids
+
+<NavLink class="nav-link" href="safety">
+
+    <span class="form-control btn btn-primary" style="width: 200px;max-width: 500px; aria-hidden="true">Create</span>
+
+</NavLink>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card mt-3 mb-3">
+            <div class="card-header">
+
+                <div style="margin-left: 20px; display: grid; grid-template-columns: auto auto auto; justify-content: space-between;" class="col-md-6">
+                   @*  <div>
+                        <label for="Plant" class="control-label">Plant</label>
+                        <SearchBox Items="_safety" OnSearch="UpdateFilteredSafety" />
+                    <SearchBox OnSearch="UpdateFilteredSafety" Placeholder1="Search Plant..." Placeholder2="Search Department..." Placeholder3="Search ToD (Date)..." />
+
+                    </div>
+
+                    <div style="margin-left: 270px;">
+                        <label for="Department" class="control-label">Department</label>
+                        <SearchBox Items="_safety" OnSearch="UpdateFilteredSafety2" />
+                    </div>
+
+                    <div style="margin-left: 270px;">
+                        <label for="ToD" class="control-label">ToD</label>
+                        <SearchBox Items="_safety" OnSearch="UpdateFilteredSafety3" />
+                    </div> *@
+<SearchBox OnSearch="UpdateFilteredSafety" Placeholder1="Search Plant..." Placeholder2="Search Department..." Placeholder3="Search ToD (Date)..." />
+
+
+                </div>
+
+
+
+
+
+
+
+
+            </div>
+            <div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@* <Form5.Pages.I /> *@
+
+@* <input @oninput="Search" placeholder="Search...." class="p-3" /> *@
+
+@if (_safety is null)
+{
+    <p><em>Loading...................... </em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>
+                    No
+                </th>
+                <th>
+                    Plant
+                </th>
+                <th>
+                    Department
+                </th>
+                <th>
+                    NameofSupervisor
+                </th>
+                <th>
+                    ToD
+                </th>
+                <th>
+                    TypesofIncident
+                </th>
+                <th>
+                    NameofInjuredPerson
+                </th>
+                <th>
+                    Gender
+                </th>
+                <th>
+                    BloodGroup
+                </th>
+                <th>
+                    InjuriLevel
+                </th>
+                <th>
+                    InjuriDescription
+                </th>
+                <th>
+                    EquipmentDamage
+                </th>
+                <th>
+                    EquipmentDescription
+                </th>
+                <th>
+                    RCA
+                </th>
+                <th>
+                    Reason
+                </th>
+                <th>
+                    CAPA
+                </th>
+                <th>
+                    Photo
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+
+
+
+            @foreach (var safety in _safety)
+            {
+                <tr>
+                    <td>
+                        @safety.Id
+                    </td>
+                    <td>
+                        @safety.Plant
+                    </td>
+                    <td>
+                        @safety.Department
+                    </td>
+                    <td>
+                        @safety.NameofSupervisor
+                    </td>
+                    <td>
+                        @safety.ToD
+                    </td>
+                    <td>
+                        @safety.TypesofIncident
+                    </td>
+                    <td>
+                        @safety.NameofInjuredPerson
+                    </td>
+                    <td>
+                        @safety.Gender
+                    </td>
+                    <td>
+                        @safety.BloodGroup
+                    </td>
+                    <td>
+                        @safety.InjuriLevel
+                    </td>
+                    <td>
+                        @safety.InjuriDescription
+                    </td>
+                    <td>
+                        @safety.EquipmentDamage
+                    </td>
+                    <td>
+                        @safety.EquipmentDescription
+                    </td>
+                    <td>
+                        @safety.Rca
+                    </td>
+                    <td>
+                        @safety.Reason
+                    </td>
+                    <td>
+                        @safety.Capa
+                    </td>
+                    <td>
+                        @safety.Photo
+                    </td>
+
+
+                    @*  <td>
+            <a class="nav-link btn btn-primary" href="EditEmployee/@emp.Id">
+            <span class="oi oi-pencil" aria-hidden="true"> Edit </span>
+            </a>
+            </td>
+            <td>
+            <a class="nav-link btn btn-danger" href="DeleteEmployee/@emp.Id">
+            <span class="oi oi-trash" aria-hidden="true"> Delete </span>
+            </a>
+            </td>  *@
+
+                </tr>
+
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+
+    List<Form5.Models.Safety> _safety = new List<Form5.Models.Safety>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _safety = await safetyService.GetAllSafetyForm();
+        _safety.ToList(); // Assign _safety
+    }
+
+    public void UpdateFilteredSafety((string, string, string) searchTerms)
+    {
+        string searchTermPlant = searchTerms.Item1;
+        string searchTermDepartment = searchTerms.Item2;
+        string searchTermToD = searchTerms.Item3;
+
+        if (!string.IsNullOrEmpty(searchTermPlant) || !string.IsNullOrEmpty(searchTermDepartment) || !string.IsNullOrEmpty(searchTermToD))
+        {
+            _safety = _safety.Where(s =>
+                (string.IsNullOrEmpty(searchTermPlant) || s.Plant.Contains(searchTermPlant, StringComparison.OrdinalIgnoreCase)) &&
+                (string.IsNullOrEmpty(searchTermDepartment) || s.Department.Contains(searchTermDepartment, StringComparison.OrdinalIgnoreCase)) &&
+                (!DateTime.TryParse(searchTermToD, out DateTime searchTod) || (s.ToD.HasValue && s.ToD.Value.Date == DateTime.Parse(searchTermToD).Date))
+            ).ToList();
+        }
+        else
+        {
+            _safety = _safety.ToList();
+        }
+    }
+
+
+    public void UpdateFilteredSafety2(string searchTerm)
+    {
+        if (string.IsNullOrEmpty(searchTerm))
+        {
+            _safety.ToList();
+        }
+        else
+        {
+            _safety = _safety.Where(
+                 // s => s.Plant.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+                 s => s.Department.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+            //  s.ToD.Contains(searchTerm, StringComparison.OrdinalIgnoreCase)
+            ).ToList();
+        }
+    }
+
+    public void UpdateFilteredSafety3(string searchTerm)
+    {
+        if (string.IsNullOrEmpty(searchTerm))
+        {
+            _safety = _safety.ToList();
+        }
+        else
+        {
+            _safety = _safety.Where(s =>
+                s.ToD.HasValue && s.ToD.Value.Date == DateTime.Parse(searchTerm).Date
+            ).ToList();
+        }
+    }
+
+
+}
+
+
+
+
+
+

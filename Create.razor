@@ -1,0 +1,347 @@
+﻿@page "/safety"
+@page "/fileupload"
+@using Form5.Data
+@using Form5.Models
+@using System.Threading.Tasks  @*  Thread:- class can be creating and manipulating a thread windows   Task:- single opearation may be executed by thread*@
+@using Org.BouncyCastle.Utilities.IO
+@using iText.Kernel.Pdf
+@using iText.Layout
+@using System.IO           @*IO mean input/output used to reading and writing files *@
+@using Microsoft.JSInterop   @* 'javascriptinteroperability'  primary function to handle  DOM  *@
+@using iText.Layout.Element
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@inject SafetyService safetyService
+@using System.Collections.Generic   @* Generics feature that allows for the creation of reusable code by creating parameterized types. *@
+@inject IJSRuntime JS
+
+<form>
+
+
+
+    <div>
+        <div class="col-md-10">
+            
+                @* <div class="card-header d-flex justify-content-between align-items-center">
+                    <h2 align="center" style="margin-left: 180px;">Safety Form</h2>
+                    <img src="/Images/Logo.png" alt="My Image" style="height: 50px; width: 50px;">
+                </div> *@
+
+
+                @* <div class ="col-lg-6"> *@
+
+
+                <EditForm Enhance Model="obj" OnValidSubmit="CreateNewSafety"></EditForm>
+
+                <div style="margin-left:20px; padding-top:5px;" class="col-md-4; d-flex justify-content;">
+                    <label for="Plant " class="control-label" style="font-weight:bold">Plant :   </label>
+                    <select @bind="@obj.Plant" class="form-control; col-md-4" style="margin-left:160px">
+                        <option value=""></option>
+                        <option value="Nashik">Nashik</option>
+                        <option value="Goa">Goa</option>
+                        <option value="Alwar">Alwar</option>
+                    </select>
+
+
+                </div>
+              
+
+
+                <div style="margin-left:20px; padding-top:5px;" class="col-md-4; d-flex justify-content;">
+                    <label for="Department" class="control-label" style="font-weight:bold">Department :  </label>
+                    <select @bind="@obj.Department" class="form-control; col-md-4" style="margin-left:110px">
+                        <option value=""></option>
+                        <option value="Bottling">Bottling</option>
+                        <option value="Maintenance">Maintenance</option>
+                        <option value="Logistic">Logistic</option>
+                        <option value="Production">Production</option>
+                        <option value="Admin">Admin</option>
+                    </select>
+                </div>   
+
+                <div style="margin-left:20px;  padding-top:5px;" class="col-md-4; d-flex justify-content;">
+                    <label for="Name of Supervisor" class="control-label" style="font-weight:bold">Name of Supervisor : </label>
+                    <select @bind="@obj.NameofSupervisor" class="form-control; col-md-4" style="margin-left:48px">
+                        <option value=""></option>
+                        <option value="Achal Kothawade">Achal Kothawade</option>
+                        <option value="Madhavi Bhujbal">Madhavi Bhujbal</option>
+                    </select>
+                </div>   
+
+                <div style="margin-left:20px; padding-top:5px;" class="date-picker col-md-4; d-flex justify-content;">
+                    <label for="Date" class="control-label" style="font-weight:bold">Date : </label>
+
+                    <input type="date" @bind="@obj.ToD" class="form-control; col-md-4" style="margin-left:164px" />
+                </div>
+
+                @* <div style="margin-left:20px; padding-top:5px;" class="col-md-4; d-flex justify-content;">
+                <label for="TypesOfIncident" class="control-label" style="font-weight:bold">Types of Incident : </label><label><input type="checkbox" style="margin-left:72px " /> Personal Injuri</label><label><input type="checkbox" style="margin-left:10px " /> Equipment Damage</label>
+                </div> *@
+                 <div style="margin-left:20px; padding-top:5px;" class="col-md-4; d-flex justify-content;">
+                    <label for="TypesOfIncident" class="control-label" style="font-weight:bold">Types of Incident : </label>
+                    @foreach (var item in obj.items)
+                    {
+                        <label>
+                            <input type="checkbox" style="margin-left:72px " @bind="item.IsSelected" /> @item.Name
+                        </label>
+
+                    }
+
+                </div>    
+                @* <input @bind="@obj.TypesofIncident" type="checkbox" id="personalInjuriCheckbox" />
+                <label for="personalInjuriCheckbox">Personal Injuri</label>
+                <input @bind="@obj.TypesofIncident" type="checkbox" id="equipmentDamageCheckbox" />
+                <label for="equipmentDamageCheckbox">Equipment Da mage</label>*@
+
+
+
+
+                @if (obj.items.Any(i => i.IsSelected && i.Name == "Personal Injuri"))  
+                {
+                    <div style="margin-left:20px; padding-top:5px;" class="col-md-4; d-flex justify-content;">
+                        <label for="NameofInjuredPerson" class="control-label" style="font-weight:bold">Name of Injured Person : </label>
+                        <select @bind="@obj.NameofInjuredPerson" class="form-control; col-md-4" style="margin-left:22px">
+                            <option value=""></option>
+                            <option value="Achal Kothawade">Achal Kothawade</option>
+                            <option value="Madhavi Bhujabal">Madhavi Bhujabal</option>
+                        </select>
+
+                    </div>  
+
+                    <div style="margin-left:20px" class="col-md-6">
+                        <label for="Gender" class="control-label" style="font-weight:bold"> Gender : </label>
+
+                        @foreach (var option in obj.Options)
+                        {
+                            <label>
+                                <input type="radio" style="margin-left:130px" name="options" @onclick="() => SetSelected(option)" />
+                                @option
+                            </label>
+
+                        }
+                    </div>
+                    @*   <input type="radio" id="male" name="fav_language" value="Male">
+                <radiobutton for="male" @bind="@obj.Gender">Male</radiobutton>
+                <input type="radio" id="female" name="fav_language" value="Female">
+                <radiobutton for="female" @bind="@obj.Gender">Female</radiobutton><br> *@
+
+
+
+
+                    <div style="margin-left:20px; padding-top:5px;" class="col-md-4; d-flex justify-content;">
+                        <label for="BloodGroup" class="control-label" style="font-weight:bold">Blood Group : </label>
+                        <select @bind="@obj.BloodGroup" class="form-control; col-md-4" style="margin-left:102px">
+                            <option value=""></option>
+                            <option value="O+ve">O+ve</option>
+                            <option value="AB+ve">AB+ve</option>
+                            <option value="B+ve">B+ve</option>
+                        </select>
+                    </div>
+
+                   
+
+
+                    <div style="margin-left:20px; padding-top:5px;" class="col-md-4; d-flex justify-content;">
+                        <label for="InjuriLevel" class="control-label" style="font-weight:bold">Injuri Level : </label>
+                        <select @bind="@obj.InjuriLevel" class="form-control; col-md-4" style="margin-left:118px">
+                            <option value=""></option>
+                            <option value="Near Miss">Near Miss</option>
+                            <option value="Moderate">Moderate</option>
+                            <option value="Severe">Severe</option>
+                        </select>
+                    </div>
+
+                    <div style="margin-left:20px; padding-top:5px;" class="col-md-4; d-flex justify-content;">
+                        <label for="InjuriDescription" class="control-label" style="font-weight:bold">Injuri Description : </label>
+                        <input form="InjuriDescription" class="form-control; col-md-4" @bind="@obj.InjuriDescription" style="margin-left:70px" />
+                    </div> 
+                }
+
+                @if (obj.items.Any(i => i.IsSelected && i.Name == "Equipment Damage"))
+                {
+                <div style="padding-top:5px; margin-left:20px; " class="col-md-4; d-flex justify-content;">
+                        <label for="EquipmentLevel"  class="control-label" style="font-weight:bold">Equipment Level : </label>
+                        <select @bind="@obj.EquipmentDamage" class="form-control; col-md-4" style="margin-left:72px">
+                            <option value=""></option>
+                            <option value="Leakage">Leakage</option>
+                            <option value="Blast">Blast</option>
+                            <option value="Fire">Fire</option>
+                        </select>
+                    </div>
+                    <div style="margin-left:20px; padding-top:5px;" class="col-md-4; d-flex justify-content;">
+                        <label for="EquipmentDescription" class="control-label" style="font-weight:bold">Equipment Description : </label>
+                        <input form="EquipmentDescription" class="form-control;  col-md-4" style="margin-left:25px" @bind="@obj.EquipmentDescription" />
+                    </div>
+                }
+                <div style="margin-left:20px; padding-top:5px;" class="col-md-4; d-flex justify-content;">
+                    <label for="RCA" class="control-label" style="font-weight:bold">RCA : </label>
+                    <select @bind="@obj.Rca"  class="form-control;  col-md-4" style="margin-left:165px">
+                        <option value=""></option>
+                        <option value="No Safety Violation">No Safety Violation</option>
+                        <option value="No missed work due to injuri">No missed work due to injuri</option>
+                        <option value="No Unsafe practice  Observed">No Unsafe practice  Observed</option>
+                        <option value="Safe Violation">Safe Violation</option>
+                        <option value="Work missed due to injuri">Work missed due to injuri</option>
+                        <option value="Unsafe practice Observed">Unsafe practice  Observed</option>
+                    </select>
+                </div> 
+
+                <div style="margin-left:20px; padding-top:5px;" class="col-md-4; d-flex justify-content;">
+                    <label for="Reason" class="control-label" style="font-weight:bold">Reason : </label>
+                    <input form="Reason" class="form-control; col-md-4" style="margin-left:140px"  @bind="@obj.Reason" />
+                </div> 
+
+                <div style="margin-left:20px; padding-top:5px;" class="col-md-4; d-flex justify-content;">
+                    <label for="CAPA" class="control-label" style="font-weight:bold">CAPA : </label>
+                    <input form="CAPA" class="form-control; col-md-4" style="margin-left:157px" @bind="@obj.Capa" />
+                </div> 
+
+                @* <div  class="col-md-6" style="margin-left:20px">
+                <InputFile  OnChange="@HandleFileChange" />
+                @if (!string.IsNullOrEmpty(imageUrl))
+                {
+                <img src="@imageUrl" alt="Uploaded Image"  />
+
+
+                }
+                </div> *@
+
+
+            <div style="position: relative;">
+
+                <img style="width: 100px; height: 100px; position: absolute; top: -417px; left: 950px;" @ref="previewImageElem" />
+
+                <br />
+
+                <InputFile @ref="inputFile" OnChange="ShowPreview" style="position: absolute; top: -230px; left: 780px;" />
+
+            </div>
+
+
+            <br />
+
+
+
+            <div align="Center">
+
+                @* <button @onclick="CreateNewSafety">Save</button> *@
+
+                <input type="button" class="btn btn-primary" @onclick="@CreateNewSafety" value="Submit" />
+
+                <input type="button" class="btn btn-primary" @onclick="GeneratePDF" value="  PDF " />
+
+                @* <button type="button" @onclick="@GeneratePdf">Generate PDF</button>  *@
+            </div>
+
+     </div>
+  
+  
+</form>
+
+<style>
+
+
+
+</style>
+
+@code {
+
+    // BaseType obj = new BaseType
+
+    private Form5.Models.Safety obj = new Form5.Models.Safety();  //Generic Namespace
+    // private bool showImage = true;
+    // private string imageUrl = @"C:\Users\User\source\repos\Form5\Form5\wwwroot\Images\FlowChart (1).jpg";
+
+
+    private InputFile? inputFile;
+    private ElementReference previewImageElem;  //"ElementRef:- Ref to pointer an element within a data structure or a document object model (DOM) in the context of programming"
+    private string base64Image;
+
+    private async Task ShowPreview(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file != null)
+        {
+            using (var memoryStream = new MemoryStream()) /* MemoryStream encapsulates data stored as an unsigned byte array.It is directly accessible in memory */
+            {
+                await file.OpenReadStream().CopyToAsync(memoryStream); /* MemoryStream object size 2GB by default */
+                var buffer = memoryStream.ToArray();
+                base64Image = $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+                await JS.InvokeVoidAsync("previewImage", inputFile!.Element, previewImageElem);
+            }
+        }
+    }
+
+    private async Task CreateNewSafety()
+    {
+        if (!string.IsNullOrEmpty(base64Image))
+        {
+            // Convert the Base64 string to a byte array
+            byte[] imageData = Convert.FromBase64String(base64Image.Split(',')[1]);
+
+            // Set the image data in the Safety object
+            obj.Photo = imageData;
+
+            // Call the service to save the safety data
+            await safetyService.AddNewSafety(obj);
+            NavigationManager.NavigateTo("Safety");
+        }
+        else
+        {
+            // Handle the case when no image is uploaded
+        }
+    }
+
+    void SetSelected(string option)
+    {
+        obj.Gender = option;
+
+        var selectedItems = obj.items.Where(i => i.IsSelected).ToList();
+        foreach (var selectedItem in selectedItems)
+        {
+            obj.TypesofIncident += "," + selectedItem.Name;
+        }
+    }
+    private void GeneratePDF()
+    {
+        using (var memoryStream = new MemoryStream())
+        {
+            var writer = new PdfWriter(memoryStream);
+            var pdf = new PdfDocument(writer);
+            var document = new Document(pdf);
+
+            document.Add(new Paragraph($"Plant: {obj.Plant}"));
+            document.Add(new Paragraph($"Department: {obj.Department}"));
+            document.Add(new Paragraph($"Name of Supervisor: {obj.NameofSupervisor}"));
+            document.Add(new Paragraph($"Today Date: {obj.ToD}"));
+            document.Add(new Paragraph($"Types of Incident: {string.Join(", ", obj.items.Where(i => i.IsSelected).Select(i => i.Name))}"));
+            document.Add(new Paragraph($"Name of Injured Person: {obj.NameofInjuredPerson}"));
+            document.Add(new Paragraph($"Gender: {obj.Gender}"));
+            document.Add(new Paragraph($"Blood Group: {obj.BloodGroup}"));
+            document.Add(new Paragraph($"Injury Level: {obj.InjuriLevel}"));
+            document.Add(new Paragraph($"Injury Description: {obj.InjuriDescription}"));
+            document.Add(new Paragraph($"Equipment Level: {obj.EquipmentDamage}"));
+            document.Add(new Paragraph($"Equipment Description: {obj.EquipmentDescription}"));
+            document.Add(new Paragraph($"RCA: {obj.Rca}"));
+            document.Add(new Paragraph($"Reason: {obj.Reason}"));
+            document.Add(new Paragraph($"CAPA: {obj.Capa}"));
+            document.Close();
+
+            var pdfData = memoryStream.ToArray();
+            var path = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "pdfs");
+            Directory.CreateDirectory(path);
+            var fileName = $"SafetyForm_{Guid.NewGuid()}.pdf";
+            var filePath = Path.Combine(path, fileName);
+            File.WriteAllBytes(filePath, pdfData);
+
+            ShowPopup($"PDF generated successfully and saved");
+            // ShowPopup($"PDF generated successfully and saved  to {filePath} ");
+        }
+    }
+
+    private void ShowPopup(string message)
+    {
+        JSRuntime.InvokeVoidAsync("alert", message);
+    }
+}
+
