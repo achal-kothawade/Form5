@@ -1,0 +1,150 @@
+﻿@page "/Equipment"
+@using Asset_System.Data
+@using LoginAndSession.Models
+@using BlazorDownloadFile
+@inject EquipmentService equipmentService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime _jsRuntime
+
+<h3>Equipment List</h3>
+
+<NavLink href="EquipmentCreate">
+    <span class="form-control btn btn-primary" style="width: 200px; max-width: 500px;">Create</span>
+</NavLink>
+
+<input @bind-value="SearchTerm" @bind-value:event="oninput" placeholder="Search" />
+<button style="width: 100px; margin: 10px;" class="form-control btn btn-primary" @onclick="FilterEquipment">Search</button>
+
+@if (filteredEquipment != null)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>No</th>
+                <th>Shop Name</th>
+                <th>Equipment Name</th>
+                <th>Equipment Function</th>
+                <th>Equipment Number</th>
+                <th>Equipment Description</th>
+                <th>Manufacturer</th>
+                <th>LifeCycle</th>
+                <th>Image</th>
+                <th>Document</th>
+                <th>Edit</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var obj in filteredEquipment)
+            {
+                <tr>
+                    <td>@obj.Id</td>
+                    <td>@obj.ShopName</td>
+                    <td>@obj.EquipmentName</td>
+                    <td>@obj.EquipmentFunction</td>
+                    <td>@obj.EquipmentNumber</td>
+                    <td>@obj.EquipmentDescription</td>
+                    <td>@obj.Manufacture</td>
+                    <td>@obj.LifeCycle</td>
+                    <td>
+                        @if (obj.Image != null && obj.Image.Length > 0)
+                        {
+                        <td><img src="@($"data:image/png;base64,{Convert.ToBase64String(obj.Image)}")" style="width: 50px; height: 50px;" /></td>
+                        }
+                        else
+                        {
+                        <td>No Image Available</td>
+                        }
+                    </td>
+                    @* <td>@obj.Doc </td> *@
+                    <td>
+                        <img src="Image\download (6).png" style="height: 50px; width: 50px;"
+                             @onclick="@(async ()=> await DownloadPDF(obj))" />
+                    </td>
+
+
+
+                    <td>
+                        <a class="nav-link btn btn-primary" href="EquipmentEdit/@obj.Id">
+                            <span class="oi oi-pencil" aria-hidden="true"> Edit </span>
+                        </a>
+                    </td>
+                    <td>
+                        <a class="nav-link btn btn-primary" href="EquipmentDelete/@obj.Id">
+                            <span class="oi oi-trash" aria-hidden="true"> Delete </span>
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p><em>Loading...</em></p>
+}
+
+<script>
+    window.downloadPdf = function (pdfFilePath, shopName) {
+        var aLink = document.createElement('a');
+        aLink.href = pdfFilePath;
+        aLink.target = '_blank';
+        aLink.download = shopName + '.pdf';
+
+        document.body.appendChild(aLink);
+        aLink.click();
+
+        document.body.removeChild(aLink);
+    }
+</script>
+
+@code {
+    [Inject] public IBlazorDownloadFileService BlazorDownloadFileService { get; set; }
+
+    async Task DownloadPDF(LoginAndSession.Models.Equipment obj)
+    {
+
+        var fileName = $"{obj.ShopName}.pdf";
+        try
+        {
+            await BlazorDownloadFileService.DownloadFile(fileName, obj.Doc, "application/pdf");
+
+        }
+        catch (Exception ex)
+        {
+
+        }
+
+    }
+
+    List<LoginAndSession.Models.Equipment> EquipmentObj;
+
+    protected override async Task OnInitializedAsync()
+    {
+        EquipmentObj = await equipmentService.GetAllEquipment();
+        FilterEquipment();
+    }
+
+    private string SearchTerm { get; set; }
+    private List<LoginAndSession.Models.Equipment> filteredEquipment;
+
+    private void FilterEquipment()
+    {
+        if (!string.IsNullOrEmpty(SearchTerm))
+        {
+            filteredEquipment = EquipmentObj.Where(s =>
+                (s.ShopName != null && s.ShopName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
+                (s.EquipmentName != null && s.EquipmentName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
+                (s.EquipmentFunction != null && s.EquipmentFunction.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
+                (s.EquipmentDescription != null && s.EquipmentDescription.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
+                (s.EquipmentNumber != null && s.EquipmentNumber.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
+                (s.Manufacture != null && s.Manufacture.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)) ||
+                (s.LifeCycle != null && s.LifeCycle.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase))
+            ).ToList();
+        }
+        else
+        {
+            filteredEquipment = EquipmentObj;
+        }
+    }
+}                                                                        

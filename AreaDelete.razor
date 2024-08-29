@@ -1,0 +1,61 @@
+﻿@page "/AreaDelete/{Id}"
+@using Asset_System.Data
+@using LoginAndSession.Data
+@using LoginAndSession.Models
+@inject AreaService areaService
+@inject NavigationManager NavigationManager
+
+<h1>Delete Area</h1>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card mt-3 mb-3"
+                <div class="card">
+                    <h1 style="text-align:center">Area Delete</h1>
+                </div>
+
+            <EditForm Enhance Model="obj" OnValidSubmit="DeleteAreaRecord"></EditForm>
+                <div style="margin-left:20px" class="col-md-6">
+                   <label for="AreaName" class="control-label">Area Name</label>
+                   <input form="AreaName" class="form-control" @bind="obj.AreaName" />
+                </div>
+
+                <div style="margin-left:20px" class="col-md-6">
+                    <label for="AreaDescription" class="control-label">Area Description</label>
+                    <input form="AreaDescription" class="form-control" @bind="obj.AreaDescription" />
+                </div>
+
+            <br />
+
+                <div class="form-group" align="center">
+                     <input type="button" class="btn btn-danger" @onclick="@DeleteAreaRecord" value="Delete" />
+                     <input type="button" class="btn btn-primary" @onclick="@Cancel" value="Cancel" />
+                </div>
+            <br/>
+           </div>
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public string Id { get; set; }
+    private LoginAndSession.Models.Area obj = new LoginAndSession.Models.Area();
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        obj = await areaService.GetAreaById(Convert.ToInt32(Id));
+    }
+
+    protected async Task DeleteAreaRecord()
+    {
+        await areaService.DeleteArea(obj);
+        NavigationManager.NavigateTo("Area");
+    }
+
+    protected void Cancel()
+    {
+        NavigationManager.NavigateTo("Area");
+    }
+}

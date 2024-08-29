@@ -1,0 +1,84 @@
+﻿@page "/Area"
+@using Asset_System.Data
+@using LoginAndSession.Data
+@using LoginAndSession.Models
+@inject AreaService areaService
+@inject NavigationManager NavigationManager
+
+<h3>AreaList</h3>
+
+<NavLink href="AreaCreate">
+    <span class="form-control btn btn-primary" style="width: 200px; max-width: 500px;">Create</span>
+</NavLink>
+
+<input @bind-value="SearchTerm" @bind-value:event="oninput" placeholder="Search" />
+<button style="width: 100px; margin: 10px;" class="form-control btn btn-primary" @onclick="FilterAreas">Search</button>
+
+
+
+@if (filteredAreas != null)
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>No</th>
+                <th>Area Name</th>
+                <th>Area Description</th>
+                <th>Edit</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var obj in filteredAreas)
+            {
+                <tr>
+                    <td>@obj.Id</td>
+                    <td>@obj.AreaName</td>
+                    <td>@obj.AreaDescription</td>
+                    <td>
+                        <a class="nav-link btn btn-primary" href="AreaEdit/@obj.Id">
+                            <span class="oi oi-pencil" aria-hidden="true"> Edit </span>
+                        </a>
+                    </td>
+                    <td>
+                        <a class="nav-link btn btn-primary" href="AreaDelete/@obj.Id">
+                            <span class="oi oi-trash" aria-hidden="true"> Delete </span>
+                        </a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <p><em>Loading...</em></p>
+}
+
+@code {
+    List<LoginAndSession.Models.Area> AreaObj;
+
+    protected override async Task OnInitializedAsync()
+    {
+        AreaObj = await areaService.GetAllArea();
+        FilterAreas();
+    }
+
+    private string SearchTerm { get; set; }
+    private List<LoginAndSession.Models.Area> filteredAreas;
+
+    private void FilterAreas()
+    {
+        if (!string.IsNullOrEmpty(SearchTerm))
+        {
+            filteredAreas = AreaObj.Where(s =>
+                s.AreaName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                s.AreaDescription.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase)
+            ).ToList();
+        }
+        else
+        {
+            filteredAreas = AreaObj;
+        }
+    }
+}

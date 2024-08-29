@@ -1,0 +1,194 @@
+﻿@page "/EquipmentEdit/{Id}"
+@using Asset_System.Data
+@using LoginAndSession.Models
+@using Microsoft.EntityFrameworkCore
+@inject EquipmentService equipmentService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JS
+@inject IJSRuntime JSRuntime
+@using System.IO
+@using System.Net.Http
+@using System.Net.Http.Json
+@using System.Threading.Tasks
+@using Microsoft.AspNetCore.Components.Forms
+@using PdfiumViewer
+@using static System.Net.Mime.MediaTypeNames
+@* @using System.Drawing; *@
+
+<h3>Edit Equipment </h3>
+
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card mt-3 mb-3"
+            <div class="card-header">
+                <h2 align="center">Equipment</h2>
+            </div>
+
+            <EditForm Enhance Model="obj" OnValidSubmit="UpdateEquipmentDetails"></EditForm>
+
+            <div style="margin-left:20px" class="col-md-6">
+                   <label for="ShopName" class="control-label">Shop Name</label>
+                   <input form="ShopName" class="form-control" @bind="obj.ShopName" />
+            </div>
+
+            <div style="margin-left:20px" class="col-md-6">
+                   <label for="EquipmentName" class="control-label">Equipment Name</label>
+                   <input form="EquipmentName" class="form-control" @bind="obj.EquipmentName" />
+            </div>
+
+            <div style="margin-left:20px" class="col-md-6">
+                   <label for="EquipmentFunction" class="control-label">Equipment Function</label>
+                   <input form="EquipmentFunction" class="form-control" @bind="obj.EquipmentFunction" />
+            </div>
+
+            <div style="margin-left:20px" class="col-md-6">
+                   <label for="EquipmentNumber" class="control-label">Equipment Number</label>
+                   <input form="EquipmentNumber" class="form-control" @bind="obj.EquipmentNumber" />
+            </div>
+
+            <div style="margin-left:20px" class="col-md-6">
+                    <label for="EquipmentDescription" class="control-label">Equipment Description</label>
+                    <input form="EquipmentDescription" class="form-control" @bind="obj.EquipmentDescription" />
+            </div>
+
+            <div style="margin-left:20px" class="col-md-6">
+                    <label for="Manufacturer" class="control-label">Manufacturer</label>
+                    <input form="Manufacturer" class="form-control" @bind="obj.Manufacture"/>
+            </div>
+
+            <div style="margin-left:20px" class="col-md-6">
+                    <label for="LifeCycle" class="control-label">LifeCycle</label>
+                    <input form="LifeCycle" class="form-control" @bind="obj.LifeCycle"/>
+            </div>
+
+            <div style="margin-left:20px" class="col-md-6">
+                  <label for="Image" class="control-label">Image Upload</label>
+                  <InputFile OnChange="HandleFileSelection" />
+            </div>
+            <div style="margin-left:20px" class="col-md-6">
+                    <label for="Document" class="control-label">Document Upload</label>
+                   <InputFile OnChange="HandleFileUploadAsync"/>
+            </div>
+                                                <br />
+            <div class="form-group" align="center">
+                  <input type="button" class="btn btn-primary" @onclick="@UpdateEquipmentDetails" value="Save" />
+                  <input type="button" class="btn btn-primary" @onclick="@Cancel" value="Cancel" />
+            </div>
+            <br/>
+           </div>
+    </div>
+</div>
+
+@code {
+
+    [Parameter]
+    public string Id { get; set; }
+    private LoginAndSession.Models.Equipment obj = new LoginAndSession.Models.Equipment();
+
+    private IBrowserFile selectedFile;
+    private string base64Image;
+
+    // Define properties for other form fields
+
+    private async Task HandleFileSelection(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+        base64Image = await ConvertImageToBase64(selectedFile);
+    }
+
+    private async Task<string> ConvertImageToBase64(IBrowserFile file)
+    {
+        using (var memoryStream = new MemoryStream())
+        {
+            await file.OpenReadStream().CopyToAsync(memoryStream);
+            byte[] buffer = memoryStream.ToArray();
+            return $"data:{file.ContentType};base64,{Convert.ToBase64String(buffer)}";
+        }
+    }
+
+    private async Task SaveImageToDatabase(byte[] imageData)
+    {
+        // Perform database operations here
+        obj.Image = imageData;
+        // Example of awaiting a database operation
+        await Task.CompletedTask;
+    }
+
+    private IBrowserFile inputFile;
+    // private string base64Image;
+
+    private async Task HandleFileUploadAsync(InputFileChangeEventArgs e)
+    {
+        inputFile = e.File;
+
+    }
+
+    private byte[] ConvertPdfToByteArray(Stream fileStream)
+    {
+
+        using (var document = PdfDocument.Load(fileStream))
+        {
+            using (var ms = new MemoryStream())
+            {
+                document.Save(ms);
+                return ms.ToArray();
+            }
+        }
+    }
+
+    // private Task SavePdfToDatabase(byte[] pdfData)
+    // {
+    //     obj.Doc = pdfData;
+    //     return Task.CompletedTask; // Placeholder for database interaction
+    // }
+
+    private Task SavePdfToDatabase(byte[] pdfData)
+    {
+        // Convert byte array to Base64 string
+        string base64String = Convert.ToBase64String(pdfData);
+
+        // Assign the Base64 string to obj.Doc
+        obj.Doc = base64String;
+
+        // Placeholder for actual database interaction
+        return Task.CompletedTask;
+    }
+
+    protected async void UpdateEquipmentDetails()
+    {
+        using (var memoryStream = new MemoryStream())
+        {
+            await inputFile.OpenReadStream(int.MaxValue).CopyToAsync(memoryStream);
+            //var pdfByteArray = ConvertPdfToByteArray(memoryStream);
+            await SavePdfToDatabase(memoryStream.ToArray());
+        }
+
+
+
+        if (!string.IsNullOrEmpty(base64Image))
+        {
+            // Convert the Base64 string to a byte array
+            byte[] imageData = Convert.FromBase64String(base64Image.Split(',')[1]);
+
+            // Set the image data in the Equipment object
+            obj.Image = imageData;
+
+            // Call the service to save the safety data
+            await equipmentService.UpdateEquipmentDetails(obj);
+            NavigationManager.NavigateTo("Equipment");
+        }
+        else
+        {
+            // Handle the case when no image is uploaded
+        }
+    }
+    protected override async Task OnInitializedAsync()
+    {
+        obj = await equipmentService.GetEquipmentById(Convert.ToInt32(Id));
+    }
+    protected async void Cancel()
+    {
+        NavigationManager.NavigateTo("Equipment");
+    }
+}
+
